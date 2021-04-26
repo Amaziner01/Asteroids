@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define DEBUG
+
 #define assert(x) if (!x) exit(EXIT_FAILURE);
 
 #define OUT_DIST 20
@@ -439,9 +441,8 @@ int main(void) {
 
 				for (int j = 0; j < 100; j++) {
 					if (asteroids[j].alive) {
-						switch (asteroids[j].size) {
-
-							#ifdef DEBUG
+						
+						#ifdef DEBUG
 							draw_line(
 										bullets[i].pos.x,
 										bullets[i].pos.y,
@@ -450,6 +451,8 @@ int main(void) {
 										0x00FF
 										);
 							#endif
+
+						switch (asteroids[j].size) {
 
 							case BIG: {
 								if (dist(asteroids[j].pos, bullets[i].pos) <= 90) {
