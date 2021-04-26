@@ -1,11 +1,9 @@
-
 #include <stdio.h>
 #include <windows.h>
+#include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
-
-#define DEBUG
 
 #define assert(x) if (!x) exit(EXIT_FAILURE);
 
@@ -69,17 +67,20 @@ void draw_circle(int x, int y, int radius, unsigned short color);
 
 LRESULT __stdcall wnd_proc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
-
 static unsigned short 	*fb;
 static int 				width, height;
 static char 			keys[256];
 static bool 			pressed = false;
 static POINT 			cursor;
 
+static RECT text_rect = {
+	0, 0, 100, 100
+};
+
 const float2_t player_shape[] = {
-	{0.0, 	20.0},
-	{-10.0,	-1.0},
-	{10.0,	-1.0}
+	{0.0, 	15.0},
+	{-10.0,	-5.0},
+	{10.0,	-5.0}
 };
 
 const float2_t small_asteroid_shape[] = {
@@ -120,7 +121,7 @@ int main(void) {
 			0,
 			"Asteroids",
 			"Asteroids",
-			WS_OVERLAPPEDWINDOW,
+			WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_OVERLAPPED | WS_SYSMENU,
 			CW_USEDEFAULT,
 			CW_USEDEFAULT,
 			500,
@@ -161,8 +162,10 @@ int main(void) {
 	bool running = true;
 	
 	player_t player;
-	player.pos = (float2_t){100, 100};
+	player.pos = (float2_t){width / 2, height / 2};
 	player.angle = 0.0;
+
+	static int points = 0;
 
 	/* Asteroid & buller pool */
 	asteroid_t asteroids[100];
@@ -181,9 +184,17 @@ int main(void) {
 
 	float spawn_time = 0.0;
 
+	COLORREF text_color = 0x00FFFFFF;
+	SetTextColor(dc, text_color);
+	SetBkMode(dc, TRANSPARENT);
+
 	while (running) {
 
+start:
 		QueryPerformanceCounter(&start);
+
+		char points_text[255];
+		sprintf(points_text, "Points: %i", points);
 
 		/* Message */
 		if (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -199,6 +210,15 @@ int main(void) {
 			GetCursorPos(&cursor);
 			ScreenToClient(wnd, &cursor);
 		}
+
+		DrawTextA(
+						dc,
+						points_text,
+						strlen(points_text),
+						&text_rect,
+						DT_BOTTOM	
+				 );
+
 
 		/* Input */
 		GetKeyboardState(keys);
@@ -278,10 +298,30 @@ int main(void) {
 				WHITE
 				);
 
+		
+		#ifdef DEBUG
+		draw_circle(
+					player.pos.x,
+					player.pos.y,
+					10,
+					0x00FF
+					);
+		#endif
+
 		/* Asteroid draw */
 		for (int i = 0; i < 100; i++) {
 			if (asteroids[i].alive) {
+				
+				int radius = asteroids[i].size == BIG ? 90 : 15;
 
+				if ((dist(player.pos, asteroids[i].pos) - radius - 10) < 0) {
+						/* Death reset */
+						memset(asteroids, 0, sizeof(asteroids));
+						memset(bullets, 0, sizeof(bullets));
+						player.pos = (float2_t){width / 2, height / 2};
+						points = 0;
+						goto start;
+				}
 
 				float rot_angle = elapsed + asteroids[i].offset;
 				float asteroid_angle_cos = cos(rot_angle);
@@ -459,6 +499,8 @@ int main(void) {
 									bullets[i].alive = false;
 									asteroids[j].alive = false;
 
+									points += 5;
+
 									int count = 0;
 									float angles[] = { 
 										(rand() % 360) * 0.01745, 
@@ -493,6 +535,8 @@ int main(void) {
 								if (dist(asteroids[j].pos, bullets[i].pos) <= 15) {
 									bullets[i].alive = false;
 									asteroids[j].alive = false;
+
+									points += 15;
 								}
 							} break;
 						}
@@ -516,7 +560,9 @@ int main(void) {
 		elapsed += dt;
 		spawn_time += dt;
 
-		printf("\r%f fps", 1 / dt);
+		//printf("\r%f fps", 1 / dt);
+		printf("\rPoints: %i     ", points);
+
 	}
 
 	free(fb);
