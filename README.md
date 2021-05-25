@@ -1,5 +1,5 @@
 # C Asteroids
-It is a basic clone of the Atari's game Asteroids made in C99 for Windows using [GDI](https://en.wikipedia.org/wiki/Graphics_Device_Interface) for rendering, compatible with *MinGW* and *MSVC*.
+It is a basic single file clone of the Atari's game Asteroids made with C99 for Windows using nothing but [GDI](https://en.wikipedia.org/wiki/Graphics_Device_Interface) for rendering, compatible with *MinGW* and *MSVC*.
 
 ## How to build
 MinGW:
